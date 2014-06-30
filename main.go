@@ -2,22 +2,18 @@ package main
 
 import (
 	"github.com/Laremere/mtsl/engine"
+	"github.com/Laremere/mtsl/engine/input"
+	"github.com/Laremere/mtsl/engine/output"
 )
 
 func main() {
 	eng := engine.NewEngine()
-	_ = eng
+	in := input.Input{Running: true}
+	out := output.NewOutput()
 
-	x := 0
-	y := 0
-	for {
-		eng.DrawColor(uint8(x), uint8(x+128), 255, 255)
-		eng.DrawLine(0, 0, x, y)
-		eng.Present()
-		x += 1
-		if x > 500 {
-			x = 0
-			y += 10
-		}
+	for in.Running {
+		eng.Input(&in)
+
+		eng.Output(out)
 	}
 }
