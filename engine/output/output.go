@@ -15,12 +15,12 @@ func newGraphic(Filepath string) *Graphic {
 
 type Graph struct {
 	Image *Graphic
-	X, Y  float32
+	X, Y  int
 }
 
 type Output struct {
 	Graphs           []Graph
-	XCenter, YCenter float32
+	XCenter, YCenter int
 }
 
 func NewOutput() *Output {
@@ -30,7 +30,7 @@ func NewOutput() *Output {
 	return &out
 }
 
-func (out *Output) Draw(Image *Graphic, X, Y float32) {
+func (out *Output) Draw(Image *Graphic, X, Y int) {
 	out.Graphs = append(out.Graphs, Graph{Image, X, Y})
 }
 

@@ -4,11 +4,19 @@ import (
 	"github.com/Laremere/mtsl/engine/input"
 	"github.com/Laremere/mtsl/engine/output"
 	"github.com/Laremere/mtsl/engine/sdl2"
+	"image/png"
+	"os"
 )
 
 type Engine struct {
-	window  *sdl.Window
-	keyDown map[string]bool
+	window   *sdl.Window
+	keyDown  map[string]bool
+	graphics map[*output.Graphic]*image
+}
+
+type image struct {
+	tex           sdl.Texture
+	width, height int
 }
 
 func NewEngine() *Engine {
@@ -19,11 +27,55 @@ func NewEngine() *Engine {
 
 	var eng Engine
 	eng.keyDown = make(map[string]bool)
-	eng.window, err = sdl.CreateWindowRenderer("Melcandra The Sky Lands", 10, 10, 1280, 720, sdl.WindowShown)
+	eng.window, err = sdl.CreateWindowRenderer("Melcandra The Sky Lands", 20, 40, 1280, 720, sdl.WindowShown)
 	if err != nil {
 		panic(err)
 	}
+
+	eng.graphics = make(map[*output.Graphic]*image)
+	for _, graphic := range output.Graphics {
+		eng.graphics[graphic], err = eng.loadImage(graphic.Filepath)
+		if err != nil {
+			panic(err)
+		}
+	}
+
 	return &eng
+}
+
+func (eng *Engine) loadImage(filePath string) (*image, error) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	PNGimage, err := png.Decode(file)
+	if err != nil {
+		return nil, err
+	}
+
+	tex, err := eng.window.CreateTexture(PNGimage.Bounds().Dx(), PNGimage.Bounds().Dx())
+	if err != nil {
+		return nil, err
+	}
+
+	width := PNGimage.Bounds().Dx()
+	height := PNGimage.Bounds().Dy()
+
+	pixels := make([]byte, 0)
+	for y := 0; y < height; y++ {
+		for x := 0; x < width; x++ {
+			r, g, b, a := PNGimage.At(x, y).RGBA()
+			pixels = append(pixels, byte(a), byte(b), byte(g), byte(r))
+		}
+	}
+
+	err = sdl.UpdateTexture(tex, pixels, PNGimage.Bounds().Dx())
+
+	i := image{tex, width, height}
+
+	return &i, err
 }
 
 func (eng *Engine) DrawColor(r, g, b, a uint8) {
@@ -65,5 +117,16 @@ func (eng *Engine) Input(in *input.Input) {
 }
 
 func (eng *Engine) Output(out *output.Output) {
+	eng.window.Clear()
+
+	for _, graph := range out.Graphs {
+		i := eng.graphics[graph.Image]
+		err := eng.window.RenderCopy(i.tex, graph.X, graph.Y, i.width, i.height)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	out.Reset()
 	eng.window.Present()
 }

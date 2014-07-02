@@ -24,8 +24,6 @@ type Input struct {
 	East  KeyState
 	West  KeyState
 
-	NorthSouth, EastWest float32
-
 	TimeStamp time.Time
 	DeltaTime time.Duration
 }

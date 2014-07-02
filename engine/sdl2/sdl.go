@@ -91,12 +91,39 @@ func (w *Window) Present() {
 	C.SDL_RenderPresent(w.r)
 }
 
+func (w *Window) Clear() {
+	C.SDL_RenderClear(w.r)
+}
+
 func (w *Window) SetDrawColor(r, g, b, a uint8) error {
 	return checksdlErr(C.SDL_SetRenderDrawColor(w.r, C.Uint8(r), C.Uint8(g), C.Uint8(b), C.Uint8(a)))
 }
 
 func (w *Window) RenderDrawLine(x1, y1, x2, y2 int) error {
 	return checksdlErr(C.SDL_RenderDrawLine(w.r, C.int(x1), C.int(y1), C.int(x2), C.int(y2)))
+}
+
+type Texture *C.SDL_Texture
+
+func (w *Window) CreateTexture(width, height int) (Texture, error) {
+	tex := Texture(C.SDL_CreateTexture(w.r, C.SDL_PIXELFORMAT_RGBA8888,
+		C.SDL_TEXTUREACCESS_STATIC,
+		C.int(width), C.int(height)))
+	if tex == nil {
+		return nil, sdlErr()
+	}
+	return tex, nil
+}
+
+func (w *Window) RenderCopy(tex Texture, x, y, width, height int) error {
+	//src := C.SDL_Rect{0, 0, C.int(width), C.int(height)}
+	dst := C.SDL_Rect{C.int(x), C.int(y), C.int(width), C.int(height)}
+	return checksdlErr(C.SDL_RenderCopy(w.r, tex, nil, &dst))
+}
+
+func UpdateTexture(tex Texture, pixels []byte, width int) error {
+	return checksdlErr(C.SDL_UpdateTexture(tex, nil,
+		unsafe.Pointer(&pixels[0]), C.int(width*4)))
 }
 
 func SdlInit() error {
